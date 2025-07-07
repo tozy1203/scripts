@@ -53,7 +53,8 @@ execute_script() {
             else
                 echo "警告：脚本 $script_name 执行失败或以非零状态码退出。"
             fi
-            rm "$temp_script" # 执行后删除临时文件
+            # 使用 -f 选项以避免因文件不存在或权限问题导致 rm 失败时触发 set -e 退出主脚本
+            rm -f "$temp_script"
         else
             echo "错误：下载脚本失败。请检查网络连接、脚本URL或GitHub仓库是否存在。"
         fi
