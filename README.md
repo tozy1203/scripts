@@ -1,22 +1,16 @@
-# 一键申请脚本
+# 一键脚本管理器
 
-## acme使用方法
+## 使用方法
 ```shell
-wget -N --no-check-certificate https://raw.githubusercontents.com/tozy1203/1key/master/acme1key.sh && bash acme1key.sh
+curl -kfsSL https://github.com/tozy1203/scripts/raw/refs/heads/main/scripts/script_manager.sh | bash
 ```
+## 功能
+- **安装Caddy**：安装Caddy
+- **安装sbox**：安装sbox
+- **运行测速**：运行测速
 
-## 安装caddy使用方法 
-```shell
-wget -N --no-check-certificate https://raw.githubusercontents.com/tozy1203/1key/master/caddy-install.sh && bash caddy-install.sh
-```
 
-## sbox使用方法 
-```shell
-wget -N --no-check-certificate https://raw.githubusercontents.com/tozy1203/1key/master/sbox.sh && bash sbox.sh
-```
 
-## 一键测带宽sptest使用方法 
-```shell
-wget -N --no-check-certificate https://raw.githubusercontents.com/tozy1203/1key/master/sptest.sh && bash sptest.sh
-```
+
+
 
