@@ -2,7 +2,7 @@
 
 ## 使用方法
 ```shell
-curl -kfsSL https://github.com/tozy1203/scripts/raw/refs/heads/main/scripts/script_manager.sh | bash
+curl -kfsSL https://github.com/tozy1203/scripts/raw/refs/heads/main/script_manager.sh | bash
 ```
 ## 功能
 - **安装Caddy**：安装Caddy
