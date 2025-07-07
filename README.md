@@ -9,6 +9,7 @@ bash -c "$(curl -sSL https://github.com/tozy1203/scripts/raw/refs/heads/main/scr
 - **安装Caddy**：安装Caddy
 - **安装sbox**：安装sbox
 - **运行测速**：运行测速
+- **启用BBR**：启用BBR
 
 
 
