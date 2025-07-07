@@ -10,6 +10,7 @@ script_descriptions["安装Caddy"]="caddy-install.sh"
 script_descriptions["安装sbox"]="sbox.sh"
 script_descriptions["运行测速"]="sptest.sh"
 script_descriptions["启用BBR"]="enable_bbr.sh"
+script_descriptions["修改SSH端口"]="change_sshd_port.sh"
 # 声明一个关联数组，用于存储用户选择的序号和对应的文件名
 declare -A script_choices
 
