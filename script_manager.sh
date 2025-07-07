@@ -66,9 +66,10 @@ execute_script() {
 # 主逻辑
 check_dependencies
 
-list_scripts
+
 
 while true; do
+    list_scripts
     read -p "请输入要执行的脚本编号 (输入 'q' 退出): " user_choice
     case "$user_choice" in
         q|Q)
