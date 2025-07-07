@@ -2,8 +2,9 @@
 
 ## 使用方法
 ```shell
-curl -kfsSL https://github.com/tozy1203/scripts/raw/refs/heads/main/script_manager.sh | bash
+bash -c "$(curl -sSL https://github.com/tozy1203/scripts/raw/refs/heads/main/script_manager.sh)"
 ```
+
 ## 功能
 - **安装Caddy**：安装Caddy
 - **安装sbox**：安装sbox
