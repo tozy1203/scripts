@@ -44,7 +44,7 @@ EOF
 get_caddy() {
   if [ ! -f "/usr/bin/caddy" ]; then # 检查 /usr/bin/caddy 文件是否存在，而不是目录
     echo "Caddy 2 未安装，开始安装。"
-    local caddy_link="https://github.com/tozy1203/scripts/raw/refs/heads/master/files/caddy.zip" # 更改为 .zip
+    local caddy_link="https://github.com/tozy1203/scripts/raw/refs/heads/main/files/caddy.zip" # 更改为 .zip
 
     $(which mkdir) -p "/etc/caddy"
     printf "已创建：%s\n" "/etc/caddy"
