@@ -229,9 +229,10 @@ menu() {
 check_singbox_installed
 while true; do
     echo "请选择一个选项:"
-    echo "1. 新安装"
-    echo "2. 列查看客户端配置"
-    echo "3. 退出"
+        echo "1. 全新安装"
+        echo "2. 更新"
+        echo "3. 查看客户端配置"
+        echo "4. 退出"
     read choice
 
     case $choice in
@@ -240,12 +241,15 @@ while true; do
             main
             ;;
         2)
-            viewclient
+            install
             ;;
         3)
+            viewclient
+            ;;
+        4)
             echo "退出程序"
             exit 0
-            ;;
+        ;;
         *)
             echo "无效的选项，请重新选择："
             ;;
