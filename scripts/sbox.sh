@@ -1,40 +1,46 @@
 #!/bin/bash
 
+check_singbox_installed() {
+    if command -v sing-box &> /dev/null; then
+        echo "sing-box 已安装"
+        return 0
+    else
+        echo "sing-box 未安装"
+        return 1
+    fi
+}
+
 install() {
-if [ ! -f "/usr/bin/sing-box" ]; then
+
 echo "安装sbox"
-curl -LO https://github.com/SagerNet/sing-box/releases/download/v1.9.7/sing-box_1.9.7_linux_amd64.deb && dpkg -i sing-box_1.9.7_linux_amd64.deb
-systemctl enable sing-box
-fi
+curl -LO https://github.com/SagerNet/sing-box/releases/download/v1.12.0-beta.35/sing-box_1.12.0-beta.35_linux_amd64.deb && dpkg -i sing-box_1.12.0-beta.35_linux_amd64.deb
+systemctl enable sing-box && systemctl daemon-reload
+
 }
 
 restart() {
 echo "重启sbox"
 systemctl restart sing-box
 }
+
 viewclient() {
 cat /etc/sing-box/client.outs
 }
+
 main() {
 read -p "输入直连域名: " host  
 echo "直连host为: $host"
 
 read -p "输入cdn host(回车为直链域名): " cdnHost
-if [ -z "$cdnHost" ]; then
-   cdnHost=$host
-fi
+    cdnHost=${cdnHost:-$host}
 echo "cdnHost为: $cdnHost"
 
 read -p "输入httpupgrade path（回车随机）: " path
-if [ -z "$path" ]; then
-   path=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -n 1)
-fi
+    path=${path:-$(cat /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -n 1)}
 echo "httpupgrade path为: $path"
 
 read -p "输入acme路径(默认/root/.local/share/caddy): " acmeRoot 
-if [ -z "$acmeRoot" ]; then
-   acmeRoot="/root/.local/share/caddy"
-fi 
+    acmeRoot=${acmeRoot:-"/root/.local/share/caddy"}
 echo "acme路径为: $acmeRoot"
 
 echo "生成uuid"
@@ -48,7 +54,6 @@ pukey=$(echo "$keypair" | grep "PublicKey:" | awk '{print $2}')
 
 echo "生成short_id"
 sid=$(sing-box generate rand --hex 8)
-
 
 cat > /etc/sing-box/config.json <<EOF
 {
@@ -72,13 +77,13 @@ cat > /etc/sing-box/config.json <<EOF
             }
         },
         {
-            "type": "vless",
+            "type": "anytls",
             "listen": "::",
             "listen_port": 8443,
             "users": [
                 {
-                    "uuid": "$uuid",
-                    "flow": "xtls-rprx-vision"
+                    "password": "$uuid",
+                    "name": "xtls-rprx-vision"
                 }
             ],
             "tls": {
@@ -134,7 +139,7 @@ cat > /etc/sing-box/config.json <<EOF
                     "disable_tls_alpn_challenge": true
                 }
             },
-            "masquerade": "https://127.0.0.1",
+            "masquerade": "http://127.0.0.1",
             "brutal_debug": false
         }
     ],
@@ -145,13 +150,11 @@ cat > /etc/sing-box/config.json <<EOF
     ]
 }
 EOF
+
 cat > /etc/sing-box/client.outs <<EOF
 套cdn：
 vless://$uuid@ip.sb:80/?type=httpupgrade&encryption=none&host=$cdnHost&path=%2F$path#httpupgrade-$cdnHost
 hy2://$uuid@$host:443/?sni=$host#hy2-$host
-
-Reality直连：
-vless://$uuid@$host:8443/?flow=xtls-rprx-vision&security=reality&sni=$host&fp=chrome&pbk=$pukey&sid=$sid#reality-$host
 
 出站json：
 {
@@ -197,12 +200,11 @@ vless://$uuid@$host:8443/?flow=xtls-rprx-vision&security=reality&sni=$host&fp=ch
 	"brutal_debug": false
 },
 {
-	"type": "vless",
-	"tag": "$host.reality",
+	"type": "anytls",
+	"tag": "$host.anytls",
 	"server": "$host",
 	"server_port": 8443,
-	"uuid": "$uuid",
-	"flow": "xtls-rprx-vision",
+	"password": "$uuid",
 	"tls": {
 		"enabled": true,
 		"server_name": "$host",
@@ -218,11 +220,13 @@ vless://$uuid@$host:8443/?flow=xtls-rprx-vision&security=reality&sni=$host&fp=ch
 	}
 }
 EOF
+
 viewclient
 restart
 }
 
 menu() {
+check_singbox_installed
 while true; do
     echo "请选择一个选项:"
     echo "1. 新安装"
@@ -248,4 +252,5 @@ while true; do
     esac
 done
 }
+
 menu

@@ -10,6 +10,15 @@ bash -c "$(curl -sSL https://github.com/tozy1203/scripts/raw/refs/heads/main/scr
 - **安装sbox**：安装sbox
 - **运行测速**：运行测速
 - **启用BBR**：启用BBR
+- **修改SSH端口**：修改SSH端口
+- **安装aria2**：安装aria2
+- **安装ufw**：安装ufw
+- **安装openlist**：安装openlist
+
+
+
+
+
 
 
 
