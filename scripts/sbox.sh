@@ -13,7 +13,7 @@ check_singbox_installed() {
 install() {
 
 echo "安装sbox"
-curl -LO https://github.com/SagerNet/sing-box/releases/download/v1.12.0-beta.35/sing-box_1.12.0-beta.35_linux_amd64.deb && dpkg -i sing-box_1.12.0-beta.35_linux_amd64.deb
+curl -LO https://github.com/SagerNet/sing-box/releases/download/v1.12.1/sing-box_1.12.1_linux_amd64.deb && dpkg -i sing-box_1.12.1_linux_amd64.deb
 systemctl enable sing-box && systemctl daemon-reload
 
 }
