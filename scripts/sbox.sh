@@ -242,6 +242,7 @@ while true; do
             ;;
         2)
             install
+            restart
             ;;
         3)
             viewclient
