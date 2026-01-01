@@ -15,6 +15,7 @@ script_descriptions["安装aria2"]="install_aria2.sh"
 script_descriptions["安装ufw"]="install_ufw.sh"
 script_descriptions["安装openlist"]="install_openlist.sh"
 script_descriptions["设置ipv4优先"]="ipv4-first.sh"
+script_descriptions["管理swap"]="swap.sh"
 # 声明一个关联数组，用于存储用户选择的序号和对应的文件名
 declare -A script_choices
 
