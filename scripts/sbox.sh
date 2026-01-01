@@ -11,11 +11,23 @@ check_singbox_installed() {
 }
 
 install() {
+# 定义版本号变量
+VERSION="1.12.14"
+# 定义架构变量（根据需要可改为 arm64）
+ARCH="amd64"
 
-echo "安装sbox"
-curl -LO https://github.com/SagerNet/sing-box/releases/download/v1.12.1/sing-box_1.12.1_linux_amd64.deb && dpkg -i sing-box_1.12.1_linux_amd64.deb
-systemctl enable sing-box && systemctl daemon-reload
+echo "安装 sing-box 版本: ${VERSION}"
 
+# 使用变量拼接下载链接和文件名
+FILE_NAME="sing-box_${VERSION}_linux_${ARCH}.deb"
+URL="https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/${FILE_NAME}"
+
+# 下载并安装
+curl -LO "$URL" && dpkg -i "$FILE_NAME"
+
+# 整理系统服务
+systemctl daemon-reload
+systemctl enable sing-box
 }
 
 restart() {
