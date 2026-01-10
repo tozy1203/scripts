@@ -91,7 +91,7 @@ cat > /etc/sing-box/config.json <<EOF
         {
             "type": "anytls",
             "listen": "::",
-            "listen_port": 8443,
+            "listen_port": 443,
             "users": [
                 {
                     "password": "$uuid",
@@ -105,25 +105,13 @@ cat > /etc/sing-box/config.json <<EOF
                     "enabled": true,
                     "handshake": {
                         "server": "$host",
-                        "server_port": 443
+                        "server_port": 8443
                     },
                     "private_key": "$pkey",
                     "short_id": [
                         "$sid"
                     ]
                 }
-            }
-        },
-        {
-            "type": "shadowsocks",
-            "tag": "ss-in",
-            "listen": "127.0.0.1",
-            "listen_port": 5353,
-            "tcp_fast_open": true,
-            "method": "2022-blake3-aes-128-gcm",
-            "password": "$sspwd",
-            "multiplex": {
-                "enabled": true
             }
         },
         {
@@ -182,22 +170,6 @@ hy2://$uuid@$host:443/?sni=$host#hy2-$host
 	}
 },
 {
-	"type": "shadowsocks",
-	"tag": "$cdnHost.ss",
-	"server": "127.0.0.1",
-	"server_port": 5353,
-	"method": "2022-blake3-aes-128-gcm",
-	"password": "$sspwd",
-	"multiplex": {
-		"enabled": true,
-		"max_connections": 8,
-		"min_streams": 4,
-		"padding": true,
-		"protocol": "smux"
-	},
-	"detour": "$cdnHost.cdn"
-},
-{
 	"type": "hysteria2",
 	"tag": "$host.hy2",
 	"server": "$host",
@@ -229,7 +201,8 @@ hy2://$uuid@$host:443/?sni=$host#hy2-$host
 			"public_key": "$pukey",
 			"short_id": "$sid"
 		}
-	}
+	},
+	// "detour": "$cdnHost.cdn"
 }
 EOF
 
