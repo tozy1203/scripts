@@ -26,7 +26,7 @@ MAX_BUF=$(( BDP * 4 ))
 if [ $MAX_BUF -lt 4194304 ]; then
     MAX_BUF=4194304
 fi
-
+CORE_MAX_BUF=$(( MAX_BUF * 2 ))
 # 默认起步值设置为 BDP 的 1 倍，不低于 128KB
 DEF_BUF=$BDP
 if [ $DEF_BUF -lt 131072 ]; then
@@ -51,7 +51,7 @@ net.ipv4.tcp_congestion_control = bbr
 
 # --- 缓冲区限制优化 ---
 # 全局最大内存限制
-net.core.rmem_max = $MAX_BUF
+net.core.rmem_max = $CORE_MAX_BUF
 net.core.wmem_max = $MAX_BUF
 # TCP 读缓冲区: [最小, 初始默认, 最大]
 net.ipv4.tcp_rmem = 4096 $DEF_BUF $MAX_BUF
