@@ -1,121 +1,103 @@
 #!/bin/bash
 
 # ====================================================
-# Debian/Ubuntu TCP 高性能自动化调优脚本 (增强版)
-# 适用环境: Debian 10+, Ubuntu 18.04+ (内核需 > 4.9)
+# TCP 低延迟高性能自动化调优脚本 (V2.0 强化版)
+# 针对：低延迟、防缓冲区膨胀、防过度重传
 # ====================================================
 
 # 1. 权限检查
 if [ "$EUID" -ne 0 ]; then
-    echo "错误：请以 root 权限运行此脚本 (sudo )"
+    echo "❌ 错误：请以 root 权限运行此脚本 (sudo ./script.sh)"
     exit 1
 fi
 
-# 2. 内核版本检查 (BBR 至少需要 4.9)
-KERNEL_MAJOR=$(uname -r | cut -d. -f1)
-KERNEL_MINOR=$(uname -r | cut -d. -f2)
-if [ "$KERNEL_MAJOR" -lt 4 ] || ([ "$KERNEL_MAJOR" -eq 4 ] && [ "$KERNEL_MINOR" -lt 9 ]); then
-    echo "❌ 错误：当前内核版本 $(uname -r) 过低，不支持 BBR。"
-    echo "请升级内核后再运行此脚本。"
+# 2. 内核版本检查
+KERNEL_VER=$(uname -r | cut -d. -f1,2)
+if (( $(echo "$KERNEL_VER < 4.9" | bc -l) )); then
+    echo "❌ 错误：内核版本 $KERNEL_VER 过低，不支持 BBR，请升级内核。"
     exit 1
 fi
 
-echo "--- 开始进行 TCP 网络参数调优 (增强版) ---"
+echo "--- 正在启动网络深度调优方案 ---"
 
 # 3. 获取用户输入
-read -p "请输入服务器带宽 (单位 Mbps, 例如 100): " BW
-read -p "请输入典型往返延迟 (单位 ms, 例如 50 或 300): " RTT
+read -p "请输入服务器带宽 (单位 Mbps, 例如 1000): " BW
+read -p "请输入典型往返延迟 (单位 ms, 例如 50): " RTT
 
 # 4. 核心计算 (BDP 逻辑)
-# BDP (Bytes) = (带宽 * 10^6 / 8) * (延迟 / 1000)
+# BDP = (带宽 * 10^6 / 8) * (延迟 / 1000)
 BDP=$(( BW * 1000000 / 8 * RTT / 1000 ))
 
-# 基础缓冲区逻辑
-MAX_BUF=$(( BDP * 4 ))
-# 不低于 4MB 保证基础性能
-if [ $MAX_BUF -lt 4194304 ]; then
-    MAX_BUF=4194304
-fi
+# 缓冲区策略：
+# MAX_BUF 设置为 2 倍 BDP (足够撑满带宽，同时防止 Bufferbloat)
+# 针对低延迟场景，不建议设置 4 倍那么大，2 倍是平衡重传和吞吐的黄金值。
+MAX_BUF=$(( BDP * 2 ))
 
-# 5. 内存安全保护 (防止 BDP 计算过大导致 OOM)
+# 兜底逻辑：不低于 4MB，不高于 32MB (除非是非常特殊的超长肥管道)
+[ $MAX_BUF -lt 4194304 ] && MAX_BUF=4194304
+[ $MAX_BUF -gt 33554432 ] && MAX_BUF=33554432
+
+# 5. 内存安全保护 (根据总内存动态限制)
 TOTAL_MEM_KB=$(free -k | grep Mem | awk '{print $2}')
-# 限制最大缓冲区不占用超过物理内存的 15%
-MEM_LIMIT_BYTES=$(( TOTAL_MEM_KB * 1024 * 15 / 100 ))
+# 限制单个连接缓冲区最大不占用超过物理内存的 10%
+MEM_LIMIT_BYTES=$(( TOTAL_MEM_KB * 1024 * 10 / 100 ))
+[ $MAX_BUF -gt $MEM_LIMIT_BYTES ] && MAX_BUF=$MEM_LIMIT_BYTES
 
-if [ $MAX_BUF -gt $MEM_LIMIT_BYTES ]; then
-    echo "⚠️ 警告：根据带宽计算的缓冲区超过内存限制，已自动调整为安全值。"
-    MAX_BUF=$MEM_LIMIT_BYTES
-fi
-
+# 默认发送窗口建议设为 BDP 的 1 倍
 DEF_BUF=$BDP
-# 默认值不低于 128KB，不高于 MAX_BUF
-if [ $DEF_BUF -lt 131072 ]; then
-    DEF_BUF=131072
-fi
-if [ $DEF_BUF -gt $MAX_BUF ]; then
-    DEF_BUF=$MAX_BUF
-fi
+[ $DEF_BUF -lt 131072 ] && DEF_BUF=131072
+[ $DEF_BUF -gt $MAX_BUF ] && DEF_BUF=$MAX_BUF
 
 echo "------------------------------------------------"
-echo "系统环境分析完毕："
+echo "计算结果："
 echo "理论 BDP: $((BDP / 1024)) KB"
-echo "系统最大缓冲区: $((MAX_BUF / 1024 / 1024)) MB"
+echo "建议最大缓冲区: $((MAX_BUF / 1024 / 1024)) MB"
 echo "------------------------------------------------"
 
-# 6. 创建优化配置文件
-CONF_FILE="/etc/sysctl.d/99-network-optimization.conf"
+# 6. 写入配置文件
+CONF_FILE="/etc/sysctl.d/99-network-low-latency.conf"
 
 cat << EOF > $CONF_FILE
-# --- 拥塞控制优化 ---
+# --- 拥塞算法与队列 (核心) ---
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 
-# --- 缓冲区限制优化 ---
+# --- 缓冲区大小设置 (基于 BDP 计算) ---
 net.core.rmem_max = $MAX_BUF
 net.core.wmem_max = $MAX_BUF
-net.ipv4.tcp_rmem = 4096 $DEF_BUF $MAX_BUF
-net.ipv4.tcp_wmem = 4096 $DEF_BUF $MAX_BUF
+net.ipv4.tcp_rmem = 4096 131072 $MAX_BUF
+net.ipv4.tcp_wmem = 4096 16384 $MAX_BUF
 
-# --- 高并发与快速响应优化 ---
-net.ipv4.tcp_window_scaling = 1
-net.ipv4.tcp_sack = 1
-net.ipv4.tcp_fastopen = 3
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_fin_timeout = 20
+# --- 针对“重传”与“延迟”的专项优化 ---
+# 限制尚未发送的数据在队列中的大小，极大地缓解缓冲区膨胀导致的重传和延迟
+net.ipv4.tcp_notsent_lowat = 131072
+# 开启低延迟模式
+net.ipv4.tcp_low_latency = 1
+# 禁用空闲后的慢启动，避免连接断续时速度骤降
 net.ipv4.tcp_slow_start_after_idle = 0
+# 开启 MTU 探测，防止因中间路径分片导致的丢包重传
 net.ipv4.tcp_mtu_probing = 1
 
-# --- 队列与并发连接数优化 ---
-net.core.netdev_max_backlog = 10000
+# --- 快速连接与并发优化 ---
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 25
+net.core.somaxconn = 8192
 net.ipv4.tcp_max_syn_backlog = 8192
-net.core.somaxconn = 4096
-net.ipv4.tcp_syncookies = 1
+net.core.netdev_max_backlog = 10000
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_sack = 1
 
-# --- 保持连接活跃 (可选) ---
-net.ipv4.tcp_keepalive_time = 600
-net.ipv4.tcp_keepalive_intvl = 30
-net.ipv4.tcp_keepalive_probes = 3
+# --- 内存水位线 (防止高并发下内存溢出) ---
+# 参考系统总内存自动调整
+net.ipv4.tcp_mem = $((TOTAL_MEM_KB/3)) $((TOTAL_MEM_KB/2)) $((TOTAL_MEM_KB*3/4))
 EOF
 
 # 7. 应用配置
 sysctl --system > /dev/null
 
-# 8. 验证结果
-echo "------------------------------------------------"
-echo "验证优化状态："
-BBR_STATUS=$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')
-if [ "$BBR_STATUS" == "bbr" ]; then
-    echo "✅ BBR 拥塞算法启动成功"
-else
-    echo "❌ BBR 启动失败，请检查内核支持"
-fi
-
-# 检查队列算法
-QDISC_STATUS=$(sysctl net.core.default_qdisc | awk '{print $3}')
-if [ "$QDISC_STATUS" == "fq" ]; then
-    echo "✅ FQ 队列调度已就绪"
-fi
-
-echo "✅ 优化参数已应用到: $CONF_FILE"
-echo "💡 提示：此优化实时生效，重启后依然有效。"
-echo "------------------------------------------------"
+# 8. 验证
+echo "✅ 优化已应用！"
+echo "当前拥塞控制: $(sysctl -n net.ipv4.tcp_congestion_control)"
+echo "当前最大缓冲区: $(( $(sysctl -n net.core.rmem_max) / 1024 / 1024 )) MB"
+echo "当前 notsent_lowat (防膨胀限制): $(sysctl -n net.ipv4.tcp_notsent_lowat) Bytes"
