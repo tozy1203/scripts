@@ -12,7 +12,7 @@ check_singbox_installed() {
 
 install() {
 # 定义版本号变量
-VERSION="1.12.14"
+VERSION="1.12.17"
 # 定义架构变量（根据需要可改为 arm64）
 ARCH="amd64"
 
