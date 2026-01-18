@@ -90,12 +90,15 @@ cat > /etc/sing-box/config.json <<EOF
         },
         {
             "type": "anytls",
+            //"type": "vless",
             "listen": "::",
             "listen_port": 443,
             "users": [
                 {
                     "password": "$uuid",
-                    "name": "xtls-rprx-vision"
+                    "name": "xtls-rprx-vision",
+                    //"uuid": "$uuid",
+                    //"flow": "xtls-rprx-vision"
                 }
             ],
             "tls": {
@@ -181,10 +184,14 @@ cat > /etc/sing-box/client.outs <<EOF
 },
 {
 	"type": "anytls",
-	"tag": "$host.anytls",
+	"tag": "$host.atls",
+    //"type": "vless",
+	//"tag": "$host.xtls",
+    //"flow": "xtls-rprx-vision"
+    //"uuid": "$uuid",
+    "password": "$uuid",
 	"server": "$host",
-	"server_port": 8443,
-	"password": "$uuid",
+	"server_port": 443,
 	"tls": {
 		"enabled": true,
 		"server_name": "$host",
@@ -197,8 +204,7 @@ cat > /etc/sing-box/client.outs <<EOF
 			"public_key": "$pukey",
 			"short_id": "$sid"
 		}
-	},
-	// "detour": "$cdnHost.cdn"
+	}
 }
 EOF
 
