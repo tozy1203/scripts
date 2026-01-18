@@ -139,7 +139,7 @@ cat > /etc/sing-box/config.json <<EOF
                     "disable_tls_alpn_challenge": true
                 }
             },
-            "masquerade": "http://127.0.0.1",
+            "masquerade": "https://$host",
             "brutal_debug": false
         }
     ],
@@ -152,10 +152,6 @@ cat > /etc/sing-box/config.json <<EOF
 EOF
 
 cat > /etc/sing-box/client.outs <<EOF
-套cdn：
-vless://$uuid@ip.sb:80/?type=httpupgrade&encryption=none&host=$cdnHost&path=%2F$path#httpupgrade-$cdnHost
-hy2://$uuid@$host:443/?sni=$host#hy2-$host
-
 出站json：
 {
 	"type": "vless",
@@ -217,7 +213,7 @@ while true; do
         echo "1. 全新安装"
         echo "2. 更新"
         echo "3. 查看客户端配置"
-        echo "4. 退出"
+        echo "0. 退出"
     read choice
 
     case $choice in
@@ -232,7 +228,7 @@ while true; do
         3)
             viewclient
             ;;
-        4)
+        0)
             echo "退出程序"
             exit 0
         ;;
