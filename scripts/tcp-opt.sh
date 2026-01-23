@@ -26,15 +26,15 @@ RTT=${RTT:-50}
 BDP=$(( BW * RTT * 125 ))
 
 # 3. 场景智能分类与策略选择
-if [ "$RTT" -lt 50 ]; then
-    # --- 低延迟场景策略 (<50ms) ---
+if [ "$RTT" -lt 100 ]; then
+    # --- 低延迟场景策略 (<100ms) ---
     SCENE="低延迟模式 (快速响应)"
     MAX_BUF=$(( BDP * 2 ))           # 给予 2 倍冗余应对突发
     NOTSENT_LIMIT=65536              # 严格限制内核积压 (64KB)
     REORDERING=3                     
     [ $MAX_BUF -lt 4194304 ] && MAX_BUF=4194304 # 最小 4MB
 else
-    # --- 中高延迟场景策略 (>=50ms) ---
+    # --- 中高延迟场景策略 (>=100ms) ---
     SCENE="中高延迟模式 (吞吐优先)"
     MAX_BUF=$(( BDP * 3 / 2 ))       # 1.5 倍 BDP 确保长管道填满
     NOTSENT_LIMIT=262144             # 放宽积压限制 (256KB)
