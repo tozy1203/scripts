@@ -69,6 +69,17 @@ sid=$(sing-box generate rand --hex 8)
 
 cat > /etc/sing-box/config.json <<EOF
 {
+	"dns": {
+        "disable_cache": false,
+        "cache_capacity": 4096,
+        "servers": [
+            {
+                "type": "https",
+                "server": "8.8.4.4",
+                "tag": "dns-remote"
+            }
+        ],
+    },
     "inbounds": [
         {
             "type": "vless",
@@ -150,7 +161,15 @@ cat > /etc/sing-box/config.json <<EOF
         {
             "type": "direct"
         }
-    ]
+    ],
+	"route": {
+        "rules": [
+            {
+                "action": "resolve",
+                "server": "dns-remote"
+            }
+        ]
+	}
 }
 EOF
 
